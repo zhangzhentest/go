@@ -13,8 +13,8 @@ func main(){
 	go func(){
 		for{
 			channels[rand.Intn(6)] <- true
-		}()
-	}
+		}
+	}()
 	
 	for i := 0;i<36;i++{
 		var x int
