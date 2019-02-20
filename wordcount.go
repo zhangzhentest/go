@@ -9,7 +9,7 @@ import(
 	"sort"
 	"strings"
 	"unicode"
-	"unicode/utf8"
+	//"unicode/utf8"
 )
 
 type Pair struct{
@@ -19,15 +19,15 @@ type Pair struct{
 
 type PairList []Pair
 
-func (p PairList) Swap(i,j int)  {p[i],p[j] = [j],p[i]}
+func (p PairList) Swap(i,j int)  {p[i],p[j] = p[j],p[i]}
 
 func (p PairList) Len() int {return len(p)}
 
-func (p PairList) Less(i,j int) {return p[j].Value < p[i].Value}
+func (p PairList) Less(i,j int) bool {return p[j].Value < p[i].Value}
 
 func SplitOnNonLetters(s string) []string{
 	//judge char is a letter?
-	notALetter := func(char rune) bool {return !uncoid.IsLetter(char)}
+	notALetter := func(char rune) bool {return !unicode.IsLetter(char)}
 	//if false -->string[i] true not in string[i] 
 	return strings.FieldsFunc(s,notALetter)
 }
@@ -41,27 +41,31 @@ func (source WordCount) Merge(wordcount WordCount) WordCount{
 	return source
 }
 
-/*func (wordcount WordCount) Report(){
+func (wordcount WordCount) Report(){
 	words := make([]string,0,len(wordcount))
-	wordWidth,frequencyWidth := 0,0
-	for word,frequency := range wordcount{
+	//wordWidth,frequencyWidth := 0,0
+	for word,_ := range wordcount{
 		words = append(words,word)
 		//get unicode character numbers
-		if width := utf8.RuneCountInString(word);width > wordWidth{
+	/*	if width := utf8.RuneCountInString(word);width > wordWidth{
 			wordWidth = width
 		}
 		if width := len(fmt.Sprint(frequency));width > frequencyWidth{
 			frequencyWidth = frequency
-		}
+		}*/
 	}
-	sort.Strings(words)
-*/
+	//sort.Strings(words)
+	fmt.Println("Word       Frwquency")
+	for _,word := range words{
+		fmt.Printf("%s      %d",word,wordcount[word])
+	}
+}
 
 func (wordcount WordCount) SortReport(){
-	p := make([]PairList,len(wordcount))
+	p := make(PairList,len(wordcount))
 	i := 0
 	for k,v := range wordcount{
-		p[i] = pair{k,v}
+		p[i] = Pair{k,v}
 		i++
 	}
 	sort.Sort(p)
@@ -80,9 +84,9 @@ func (wordcount WordCount) UpdateFreq(filename string){
 	reader := bufio.NewReader(file)
 	for{
 		//get '\n' before data
-		line,err := reader.ReadString("\n")
+		line,err := reader.ReadString('\n')
 		//delete before string space and end of string space
-		for _,word := SplitOnNonLetters(strings.TrimSpace(line)){
+		for _,word := range SplitOnNonLetters(strings.TrimSpace(line)){
 			wordcount[strings.ToLower(word)] ++
 		}
 		if err != nil{
@@ -98,7 +102,7 @@ func (wordcount WordCount) WordFreqCounter(files []string){
 	results := make(chan Pair,len(files))
 	done := make(chan struct{},len(files))
 	for i := 0;i<len(files);{
-		go func(done chan,results chan,filename string){
+		go func(done chan <- struct{},results chan <- Pair,filename string){
 			wordcount := make(WordCount)
 			wordcount.UpdateFreq(filename)
 			for k,v := range wordcount{
@@ -106,7 +110,31 @@ func (wordcount WordCount) WordFreqCounter(files []string){
 				results <- pair
 			}
 			done <- struct{}{}
-		}(done,results,files[i]
+		}(done,results,files[i])
+		i++
+	}
+	
+	for working := len(files);working > 0;{
+		select{
+			case pair := <-results:
+				wordcount[pair.Key] += pair.Value
+			case <-done:
+				working--
+		}
+	}
+
+DONE:
+	for{
+		select{	
+		case pair := <-results:
+			wordcount[pair.Key] += pair.Value
+		default:
+			break DONE
+		}
+	}
+	close(results)
+	close(done)
+}
 			
 
 	
