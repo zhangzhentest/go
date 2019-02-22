@@ -16,5 +16,5 @@ func main(){
 
 	wordcounter := make(wordcount.WordCount)
 	wordcounter.WordFreqCounter(os.Args[1:])
-	wordcounter.Report()
+	wordcounter.SortReport()
 }

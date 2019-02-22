@@ -9,7 +9,7 @@ import(
 	"sort"
 	"strings"
 	"unicode"
-	//"unicode/utf8"
+	"unicode/utf8"
 )
 
 type Pair struct{
@@ -43,21 +43,24 @@ func (source WordCount) Merge(wordcount WordCount) WordCount{
 
 func (wordcount WordCount) Report(){
 	words := make([]string,0,len(wordcount))
-	//wordWidth,frequencyWidth := 0,0
-	for word,_ := range wordcount{
+	wordWidth,frequencyWidth := 0,0
+	for word,frequency := range wordcount{
 		words = append(words,word)
 		//get unicode character numbers
-	/*	if width := utf8.RuneCountInString(word);width > wordWidth{
+		if width := utf8.RuneCountInString(word);width > wordWidth{
 			wordWidth = width
 		}
 		if width := len(fmt.Sprint(frequency));width > frequencyWidth{
 			frequencyWidth = frequency
-		}*/
+		}
 	}
-	//sort.Strings(words)
-	fmt.Println("Word       Frwquency")
+	sort.Strings(words)
+	gap := wordWidth + frequencyWidth - len("Word") - len("Frequency")
+	//%*s gap->* %gaps  space numbers
+	fmt.Printf("Word %*s%s\n",gap," ","Frwquency")
 	for _,word := range words{
-		fmt.Printf("%s      %d",word,wordcount[word])
+		// - left duiqi
+		fmt.Printf("%-*s%*d\n",wordWidth,word,frequencyWidth,wordcount[word])
 	}
 }
 
@@ -69,6 +72,26 @@ func (wordcount WordCount) SortReport(){
 		i++
 	}
 	sort.Sort(p)
+
+	wordWidth,frequencyWidth := 0,0
+	for _,pair := range p{
+		word,frequency := pair.Key,pair.Value
+		//get unicode character numbers
+		if width := utf8.RuneCountInString(word);width > wordWidth{
+			wordWidth = width
+		}
+		if width := len(fmt.Sprint(frequency));width > frequencyWidth{
+			frequencyWidth = width
+		}
+	}
+	gap := wordWidth + frequencyWidth - len("Word") - len("Frequency")
+	//%*s gap->* %gaps  space numbers
+	fmt.Printf("Word %*s%s\n",gap," ","Frequency")
+	for _,pair := range p{
+		// - left duiqi
+		fmt.Printf("%-*s %*d\n",wordWidth,pair.Key,frequencyWidth,pair.Value)
+	}
+
 }
 
 func (wordcount WordCount) UpdateFreq(filename string){
